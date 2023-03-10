@@ -7,6 +7,7 @@ namespace DH\Auditor\Provider\Doctrine\Auditing\Transaction;
 use DH\Auditor\Exception\MappingException;
 use DH\Auditor\Provider\Doctrine\Persistence\Helper\DoctrineHelper;
 use DH\Auditor\User\UserInterface;
+use Doctrine\Common\Proxy\Proxy;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\MappingException as ORMMappingException;
@@ -190,11 +191,18 @@ trait AuditTrait
             return null;
         }
 
-        $entityManager->getUnitOfWork()->initializeObject($entity); // ensure that proxies are initialized
         $meta = $entityManager->getClassMetadata(DoctrineHelper::getRealClassName($entity));
 
         $pkValue = $extra['id'] ?? $this->id($entityManager, $entity);
         $pkName = $meta->getSingleIdentifierFieldName();
+
+        if (($entity instanceof Proxy) && isset($pkName, $pkValue)) {
+            $entity = $entityManager->find($meta->name, $pkValue);
+        } else {
+            $entityManager->getUnitOfWork()->initializeObject($entity); // ensure that proxies are initialized
+        }
+
+
 
         if (method_exists($entity, '__toString')) {
             try {
