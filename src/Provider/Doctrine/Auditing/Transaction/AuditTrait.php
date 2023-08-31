@@ -197,7 +197,7 @@ trait AuditTrait
         $pkName = $meta->getSingleIdentifierFieldName();
 
         if (($entity instanceof Proxy) && isset($pkName, $pkValue)) {
-            $entity = $entityManager->find($meta->name, $pkValue);
+            $entity = $entityManager->find($meta->name, $pkValue) ?? $entity;
         } else {
             $entityManager->getUnitOfWork()->initializeObject($entity); // ensure that proxies are initialized
         }
